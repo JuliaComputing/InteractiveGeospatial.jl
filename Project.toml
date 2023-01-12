@@ -3,6 +3,10 @@ uuid = "9dbc1c15-08f7-42e2-915c-53d8f7c4cd8b"
 authors = ["Josh Day <emailjoshday@gmail.com> and contributors"]
 version = "0.1.0"
 
+[deps]
+Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
+Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+
 [compat]
 julia = "1"
 
