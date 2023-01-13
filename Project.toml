@@ -9,6 +9,8 @@ Scratch = "6c6a2e73-6563-6170-7368-637461726353"
 
 [compat]
 julia = "1"
+Scratch = "1.1"
+Pluto = "0.19"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"

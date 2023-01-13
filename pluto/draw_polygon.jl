@@ -16,6 +16,7 @@ end
 
 # ╔═╡ f04dc334-927a-11ed-08f6-45de5b8f67a4
 begin 
+	using OrderedCollections
 	using Observables 
 	using PlotlyLight
 	PlotlyLight.src!(:cdn)
@@ -30,6 +31,7 @@ begin
 	using StatsBase
 	using Geodesy
 	using Images
+	using ImageEdgeDetection
 	using Cobweb: h, Javascript
 	using PlutoUI
 	md"""
@@ -87,20 +89,28 @@ end
 
 # ╔═╡ 495fae75-a89e-4739-9bcb-34174c15ba8d
 @ifdata begin 
-	md"## Select Band: $(@bind band NumberField(1:nbands))"
+	md"## Select Band: $(@bind band Select(1:nbands))"
 end
 
 # ╔═╡ 1c1f90ed-4fd8-44f3-96bc-902611df8bd5
 title(1, "Settings")
 
 # ╔═╡ 7504e969-6125-403c-be5c-d5727d180df0
-title(5, "Click on the plot to draw a Polygon.")
+title(5, "Click multiple points on the plot to draw a Polygon.")
+
+# ╔═╡ 6c7f0b3f-b2b4-4f3b-9980-9ef98b1f6ef7
+begin
+	Percentile = ImageEdgeDetection.Percentile
+	canny(σ) = Canny(spatial_scale=σ, high=Percentile(80), low=Percentile(20))
+end
 
 # ╔═╡ 24df8362-bd99-4013-bebe-e149a3ad1afd
-remappings = Dict(
+remappings = sort!(OrderedDict(
 	"None" => identity,
-	"Log" => x -> log.(x .+ 1)
-)
+	"Log" => x -> log.(x .+ 1),
+	"HistogramEqualization" => x->adjust_histogram(x, Equalization(nbins=256)),
+	"EdgeDetection" => x -> detect_edges(x, canny(5))
+))
 
 # ╔═╡ a65971dc-30ad-41da-af13-4e836c03ad79
 @ifdata begin 	
@@ -113,16 +123,16 @@ remappings = Dict(
 	push!(settings, (name=:Resize_Factor, setting=resize_ui))
 
 	# Remap
-	remap_ui = @bind remap Select(collect(keys(remappings)))
+	remap_ui = @bind remap Select(collect(keys(remappings)); default="None")
 	push!(settings, (name=:Remap, setting=remap_ui))
 
-	# # X range 
-	# xrange_ui = @bind xrange RangeSlider(range(ext.X..., 100))
-	# push!(settings, (name=:Xrange, setting=xrange_ui))
+	# X range 
+	xrange_ui = @bind xrange confirm(RangeSlider(range(ext.X..., 100)))
+	push!(settings, (name=:Xrange, setting=xrange_ui))
 
-	# # Y range 
-	# yrange_ui = @bind yrange RangeSlider(range(ext.Y..., 100))
-	# push!(settings, (name=:Yrange, setting=yrange_ui))
+	# Y range 
+	yrange_ui = @bind yrange confirm(RangeSlider(range(ext.Y..., 100)))
+	push!(settings, (name=:Yrange, setting=yrange_ui))
 	
 
 	settings
@@ -145,10 +155,25 @@ function latlonratio(latlon::LLA)
     Δlat / Δlon
 end
 
+# ╔═╡ af8d7f47-b7ea-427e-96e8-25d01c02f526
+function rotate_raster(A)
+	l = first(lookup(A, (X, Y)))
+	if all(hasdim(A, (X, Y))) && l isa Rasters.AffineProjected
+        res = Y(abs(l.affinemap.linear[1, 1])), X(abs(l.affinemap.linear[2, 2]))
+        resample(A, res)
+	else 
+		A
+    end
+end
+
 # ╔═╡ c2943598-fbff-4249-bbf2-3dbb89718813
 # ╠═╡ show_logs = false
 @ifdata begin
-	rsel = r[Band=band]
+	rsel = rotate_raster(r)[
+		Band=band, 
+		X(xrange[1] .. xrange[end]), 
+		Y(yrange[1] .. yrange[end])
+	]
 	ext_sel = Extents.extent(rsel)
 
 
@@ -226,8 +251,10 @@ DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
 Extents = "411431e0-e8b7-467b-b5e0-f676ba4f2910"
 Geodesy = "0ef565a4-170c-5f04-8de2-149903a85f3d"
 GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+ImageEdgeDetection = "2b14c160-480b-11ea-1b58-656063328ff7"
 Images = "916415d5-f1e6-5110-898d-aaa5f9f070e0"
 Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
 PlotlyLight = "ca7969ec-10b3-423e-8d99-40f33abb42bf"
 Plots = "91a5bcdd-55d7-5caf-9e0b-520d859cae80"
 PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
@@ -243,8 +270,10 @@ DataFrames = "~1.4.4"
 Extents = "~0.1.1"
 Geodesy = "~1.1.0"
 GeometryBasics = "~0.4.5"
+ImageEdgeDetection = "~0.1.5"
 Images = "~0.25.2"
 Observables = "~0.5.4"
+OrderedCollections = "~1.4.1"
 PlotlyLight = "~0.6.0"
 Plots = "~1.38.1"
 PlutoUI = "~0.7.49"
@@ -259,7 +288,7 @@ PLUTO_MANIFEST_TOML_CONTENTS = """
 
 julia_version = "1.8.4"
 manifest_format = "2.0"
-project_hash = "04dc3fbc3ae4e8bf180c0f48ad0ea2a4d1752faf"
+project_hash = "b8468bd41b742a3fe858120a2bcbf1c645202c5a"
 
 [[deps.ASCIIrasters]]
 git-tree-sha1 = "0cb0046798af8ac8561334c5a2a31f015e53c2b1"
@@ -769,9 +798,9 @@ version = "1.12.2+2"
 
 [[deps.HTTP]]
 deps = ["Base64", "CodecZlib", "Dates", "IniFile", "Logging", "LoggingExtras", "MbedTLS", "NetworkOptions", "OpenSSL", "Random", "SimpleBufferStream", "Sockets", "URIs", "UUIDs"]
-git-tree-sha1 = "a8746094344c6c40be50bad7f06ab93439ea8c3d"
+git-tree-sha1 = "752b7f2640a30bc991d37359d5fff50ce856ecde"
 uuid = "cd3eb016-35fb-5094-929b-558a96fad6f3"
-version = "1.7.0"
+version = "1.7.1"
 
 [[deps.HarfBuzz_jll]]
 deps = ["Artifacts", "Cairo_jll", "Fontconfig_jll", "FreeType2_jll", "Glib_jll", "Graphite2_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg"]
@@ -826,6 +855,12 @@ deps = ["Distances", "ImageCore", "ImageMorphology", "LinearAlgebra", "Statistic
 git-tree-sha1 = "b1798a4a6b9aafb530f8f0c4a7b2eb5501e2f2a3"
 uuid = "51556ac3-7006-55f5-8cb3-34580c88182d"
 version = "0.2.16"
+
+[[deps.ImageEdgeDetection]]
+deps = ["DataStructures", "ImageCore", "ImageFiltering", "Interpolations", "Parameters", "Setfield", "StaticArrays", "StatsBase", "UnPack"]
+git-tree-sha1 = "ab6e7a167a8ecda5da60cbb7533da548de878dce"
+uuid = "2b14c160-480b-11ea-1b58-656063328ff7"
+version = "0.1.5"
 
 [[deps.ImageFiltering]]
 deps = ["CatIndices", "ComputationalResources", "DataStructures", "FFTViews", "FFTW", "ImageBase", "ImageCore", "LinearAlgebra", "OffsetArrays", "Reexport", "SnoopPrecompile", "SparseArrays", "StaticArrays", "Statistics", "TiledIteration"]
@@ -931,10 +966,10 @@ deps = ["Markdown"]
 uuid = "b77e0a4c-d291-57a0-90e8-8db25a27a240"
 
 [[deps.Interpolations]]
-deps = ["Adapt", "AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "Requires", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
-git-tree-sha1 = "721ec2cf720536ad005cb38f50dbba7b02419a15"
+deps = ["AxisAlgorithms", "ChainRulesCore", "LinearAlgebra", "OffsetArrays", "Random", "Ratios", "Requires", "SharedArrays", "SparseArrays", "StaticArrays", "WoodburyMatrices"]
+git-tree-sha1 = "b7bc05649af456efc75d178846f47006c2c4c3c7"
 uuid = "a98d9a8b-a2ab-59e6-89dd-64a1c18fca59"
-version = "0.14.7"
+version = "0.13.6"
 
 [[deps.IntervalSets]]
 deps = ["Dates", "Random", "Statistics"]
@@ -1367,9 +1402,9 @@ version = "0.12.3"
 
 [[deps.Parsers]]
 deps = ["Dates", "SnoopPrecompile"]
-git-tree-sha1 = "6466e524967496866901a78fca3f2e9ea445a559"
+git-tree-sha1 = "8175fc2b118a3755113c8e68084dc1a9e63c61ee"
 uuid = "69de0a69-1ddd-5017-9359-2bf0b02dc9f0"
-version = "2.5.2"
+version = "2.5.3"
 
 [[deps.Pipe]]
 git-tree-sha1 = "6842804e7867b115ca9de748a0cf6b364523c16d"
@@ -1572,10 +1607,10 @@ version = "1.1.1"
 uuid = "9e88b42a-f829-5b0c-bbe9-9e923198166b"
 
 [[deps.Setfield]]
-deps = ["ConstructionBase", "Future", "MacroTools", "StaticArraysCore"]
-git-tree-sha1 = "e2cc6d8c88613c05e1defb55170bf5ff211fbeac"
+deps = ["ConstructionBase", "Future", "MacroTools", "Requires"]
+git-tree-sha1 = "38d88503f695eb0301479bc9b0d4320b378bafe5"
 uuid = "efcf1570-3423-57d1-acb7-fd33fddbac46"
-version = "1.1.1"
+version = "0.8.2"
 
 [[deps.SharedArrays]]
 deps = ["Distributed", "Mmap", "Random", "Serialization"]
@@ -2059,8 +2094,10 @@ version = "1.4.1+0"
 # ╟─824d9230-5a48-4971-9e2b-439bd2392bd3
 # ╟─b7520af5-3c0b-4b41-a26a-049220b9f8fe
 # ╟─dc7484b2-7f87-44a6-b8da-7f8e56e92d22
-# ╠═24df8362-bd99-4013-bebe-e149a3ad1afd
+# ╟─24df8362-bd99-4013-bebe-e149a3ad1afd
+# ╟─6c7f0b3f-b2b4-4f3b-9980-9ef98b1f6ef7
 # ╟─2fd1aebb-17e7-4e81-aa3c-31acb814a595
 # ╟─8cfb55ae-adac-4840-9b04-f61194693f48
+# ╟─af8d7f47-b7ea-427e-96e8-25d01c02f526
 # ╟─00000000-0000-0000-0000-000000000001
 # ╟─00000000-0000-0000-0000-000000000002
