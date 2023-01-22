@@ -1,4 +1,4 @@
-using InteractiveGeo
+using InteractiveGeospatial
 using Test
 
 @testset "InteractiveGeo.jl" begin

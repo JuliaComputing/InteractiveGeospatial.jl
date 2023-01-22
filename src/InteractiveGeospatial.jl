@@ -4,7 +4,7 @@ using Scratch
 using Pluto
 
 function __init__()
-    global DIR = joinpath(@get_scratch!("InteractiveGeo-user"))
+    global DIR = joinpath(@get_scratch!("InteractiveGeospatial-user"))
 end
 
 function scratchfile(src)

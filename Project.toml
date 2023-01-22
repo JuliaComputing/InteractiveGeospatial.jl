@@ -1,4 +1,4 @@
-name = "InteractiveGeo"
+name = "InteractiveGeospatial"
 uuid = "9dbc1c15-08f7-42e2-915c-53d8f7c4cd8b"
 authors = ["Josh Day <emailjoshday@gmail.com> and contributors"]
 version = "0.1.0"
