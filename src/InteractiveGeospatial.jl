@@ -1,4 +1,4 @@
-module InteractiveGeo
+module InteractiveGeospatial
 
 using Scratch
 using Pluto
