@@ -1,10 +1,9 @@
 module InteractiveGeospatial
 
-using GLMakie, Rasters, Observables, Markdown
+using GLMakie, Rasters, Observables, Markdown, JSON3
 using OrderedCollections: OrderedDict
-import GeoJSON
 
-export draw_features, @md_str
+export draw_features, @md_str, geojson
 
 #-----------------------------------------------------------------------------# remap functions
 pseudolog10(x) = asinh(x/2) / log(10)
@@ -16,6 +15,29 @@ mutable struct PolygonFeature
     coordinates::Vector{Point2f}
     notes::Markdown.MD
 end
+
+function prepare_geojson_write(feat::PolygonFeature)
+    OrderedDict(
+        "type" => "Feature",
+        "geometry" => OrderedDict(
+            "type" => "Polygon",
+            "coordinates" => feat.coordinates
+        ),
+        "properties" => OrderedDict(
+            "label" => feat.label,
+            "notes" => repr(feat.notes)
+        )
+    )
+end
+function prepare_geojson_write(features::OrderedDict{String, PolygonFeature})
+    OrderedDict(
+        "type" => "FeatureCollection",
+        "features" => [prepare_geojson_write(feat) for feat in values(features)]
+    )
+end
+
+geojson(x) = JSON3.write(prepare_geojson_write(x))
+
 
 #-----------------------------------------------------------------------------# draw_features
 function draw_features(r, ui_width=300, resolution=(1300 + ui_width, 1200))
