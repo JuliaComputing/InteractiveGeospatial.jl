@@ -1,6 +1,4 @@
-using InteractiveGeospatial
-using Test
+using InteractiveGeospatial, GeoMakie, Rasters, RasterDataSources, ArchGDAL, Test
 
-@testset "InteractiveGeo.jl" begin
-    # Write your tests here.
-end
+
+getraster(WorldClim{Climate}, :wind; month=1:12)

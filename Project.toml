@@ -4,13 +4,27 @@ authors = ["Josh Day <emailjoshday@gmail.com> and contributors"]
 version = "0.1.0"
 
 [deps]
+About = "69d22d85-9f48-4c46-bbbe-7ad8341ff72a"
+ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
+CoordinateTransformations = "150eb455-5306-5404-9cee-2592286d6298"
+DataFrames = "a93c6f00-e57d-5684-b7b6-d8193f3e46c0"
+Extents = "411431e0-e8b7-467b-b5e0-f676ba4f2910"
+GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
+GeoInterface = "cf35fbd7-0cd7-5166-be24-54bfbe79505f"
+GeoJSON = "61d90e0f-e114-555e-ac52-39dfb47a3ef9"
+GeometryBasics = "5c1252a2-5f33-56bf-86c9-59e7332b4326"
+Makie = "ee78f7c6-11fb-53f2-987a-cfe4a2b5a57a"
+Markdown = "d6f4376e-aef5-505a-96c1-9c027394607a"
+Observables = "510215fc-4207-5dde-b226-833fc4488ee2"
+OrderedCollections = "bac558e1-5e72-5ebc-8fee-abe8a469f55d"
+PlotlyLight = "ca7969ec-10b3-423e-8d99-40f33abb42bf"
 Pluto = "c3e4b0f8-55cb-11ea-2926-15256bba5781"
-Scratch = "6c6a2e73-6563-6170-7368-637461726353"
+PlutoHooks = "0ff47ea0-7a50-410d-8455-4348d5de0774"
+PlutoUI = "7f904dfe-b85e-4ff6-b463-dae2292396a8"
+Rasters = "a3a2b9e3-a471-40c9-b274-f788e487c689"
 
 [compat]
 julia = "1"
-Scratch = "1.1"
-Pluto = "0.19"
 
 [extras]
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
