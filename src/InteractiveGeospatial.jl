@@ -10,7 +10,7 @@ pseudolog10(x) = asinh(x/2) / log(10)
 symlog10(x) = sign(x) * log10(abs(x) + 1)
 
 #-----------------------------------------------------------------------------# PolygonFeature
-struct PolygonFeature
+mutable struct PolygonFeature
     label::String
     coordinates::Vector{Point2f}
     notes::Markdown.MD
@@ -102,7 +102,7 @@ function draw_features(r, ui_width=300, size=(1000, 1000))
 
     display(fig)
 
-    return features
+    return (; features, polygon_label)
 end
 
 
