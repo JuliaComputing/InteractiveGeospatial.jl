@@ -4,6 +4,7 @@ using GLMakie, Rasters, Observables, Markdown
 using OrderedCollections: OrderedDict
 import GeoJSON
 
+export draw_features, @md_str
 
 #-----------------------------------------------------------------------------# remap functions
 pseudolog10(x) = asinh(x/2) / log(10)
@@ -17,13 +18,13 @@ mutable struct PolygonFeature
 end
 
 #-----------------------------------------------------------------------------# draw_features
-function draw_features(r, ui_width=300, size=(1000, 1000))
+function draw_features(r, ui_width=300, resolution=(1300 + ui_width, 1200))
     r = Rasters._maybe_resample(r)  # Remove rotation if rotated: AffineMap => LinRange Axes
     x_extrema, y_extrema = extrema.(r.dims)
     top_left = x_extrema[1], y_extrema[2]
 
     # Initialize Figure
-    fig = Figure(; size)
+    fig = Figure(; resolution)
     ax = Axis(fig[1, 2])
     rowsize!(fig.layout, 1, Relative(1))
 
@@ -46,13 +47,21 @@ function draw_features(r, ui_width=300, size=(1000, 1000))
     remap_fun = Menu(fig; options=[cbrt, identity, sqrt, cbrt, pseudolog10, symlog10])
     colormap = Menu(fig; options=[:viridis, :grays, :ground_cover, :inferno, :plasma, :magma, :tokyo, :devon, :hawaii, :buda, :RdBu, :BrBg])
 
+    polygon2view = Menu(fig; options=["none"])
+    shape = @lift $(polygon2view.selection) == "none" ? Point2f[] : features[][$(polygon2view.selection)].coordinates
+
     max_res = Textbox(fig; stored_string="1000", validator=Int, width=ui_width)
     A = @lift Rasters._subsample(r, parse(Int, $(max_res.stored_string)))
 
     clear_btn = Button(fig; label="Clear", width=ui_width)
     on(clear_btn.clicks) do _
         click_coords[] = []
+        messages.text[] = ""
     end
+
+    polygon_label = Textbox(fig; placeholder="Polygon Label", width=ui_width, validator= x -> x ∉ keys(features[]))
+    # ready_to_save = @lift $(polygon_label.stored_string) ∉ keys($features) && length($click_coords) > 2 && !isempty($(polygon_label.stored_string))
+
 
     save_btn = Button(fig; label="Save", width=ui_width)
     on(save_btn.clicks) do _
@@ -61,6 +70,8 @@ function draw_features(r, ui_width=300, size=(1000, 1000))
             features[][feat.label] = feat
             notify(features)
             messages.color = :green
+            push!(polygon2view.options[], feat.label)
+            notify(polygon2view.options)
             messages.text[] = "Polygon Saved: \"$(feat.label)\""
             @info "Polygon Saved"
         else
@@ -69,11 +80,10 @@ function draw_features(r, ui_width=300, size=(1000, 1000))
         end
     end
 
-    polygon_label = Textbox(fig; stored_string="Polygon 1", width=ui_width, validator= x -> x ∉ keys(features[]))
-
     messages = Label(fig, ""; color=:green)
 
     label(text) = Label(fig, text, fontsize=24, halign = :left, padding=(0,0,0,40))
+    sublabel(text) = Label(fig, text, fontsize=15, halign=:left, padding = (0,0,0,10))
 
     # UI Layout
     fig[1, 1] = vgrid!(valign=:top, width=ui_width,
@@ -83,26 +93,35 @@ function draw_features(r, ui_width=300, size=(1000, 1000))
             remap_fun,
         label("Colormap"),
             colormap,
-        label("Polygon"),
-            Label(fig, "  Color:", halign=:left, fontsize=18),
-                draw_color,
-            Label(fig, "  Current Drawing", halign=:left, fontsize=18),
+        label("Draw Polygon"),
+            draw_color,
             clear_btn,
+            sublabel("Enter Unique Label and Press Enter:"),
             polygon_label,
             save_btn,
-            messages
+            messages,
+        label("View Saved Polygon"),
+            polygon2view,
     )
 
-    # Plot
+    # Heatmap
     h = heatmap!(ax, A, colormap=colormap.selection, colorscale=remap_fun.selection)
-    text!(ax, top_left..., text=@lift(string($mouse_coords)), color=draw_color.selection, align=(:left, :top), fontsize=24)
-    scatterlines!(ax, click_coords, color=draw_color.selection, linewidth=2, markersize=20)
-    lines!(ax, dotted_line, color=draw_color.selection, linewidth=2, linestyle=:dash)
     Colorbar(fig[1, 3], h)
 
-    display(fig)
+    # Mouse position in top left corn
+    text!(ax, top_left..., text=@lift(string($mouse_coords)), color=draw_color.selection, align=(:left, :top), fontsize=24)
 
-    return (; features, polygon_label)
+    # Polygon Drawing
+    scatterlines!(ax, click_coords, color=draw_color.selection, linewidth=2, markersize=20)
+    lines!(ax, dotted_line, color=draw_color.selection, linewidth=2, linestyle=:dash)
+
+    # Polygon Viewing
+    poly!(ax, shape, color=draw_color.selection, linewidth=1, linestyle=(:dot, :dense), alpha=.3)
+
+    resize_to_layout!(fig)
+    display(fig, px_per_unit = 2)
+
+    return features
 end
 
 
