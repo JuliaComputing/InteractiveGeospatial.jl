@@ -40,13 +40,13 @@ geojson(x) = JSON3.write(prepare_geojson_write(x))
 
 
 #-----------------------------------------------------------------------------# draw_features
-function draw_features(r, ui_width=300, resolution=(1300 + ui_width, 1200))
+function draw_features(r, ui_width=300, size=(800 + ui_width, 800))
     r = Rasters._maybe_resample(r)  # Remove rotation if rotated: AffineMap => LinRange Axes
     x_extrema, y_extrema = extrema.(r.dims)
     top_left = x_extrema[1], y_extrema[2]
 
     # Initialize Figure
-    fig = Figure(; resolution)
+    fig = Figure()
     ax = Axis(fig[1, 2])
     rowsize!(fig.layout, 1, Relative(1))
 
@@ -138,7 +138,7 @@ function draw_features(r, ui_width=300, resolution=(1300 + ui_width, 1200))
     lines!(ax, dotted_line, color=draw_color.selection, linewidth=2, linestyle=:dash)
 
     # Polygon Viewing
-    poly!(ax, shape, color=draw_color.selection, linewidth=1, linestyle=(:dot, :dense), alpha=.3)
+    poly!(ax, shape, color=draw_color.selection, linestyle=(:dot, :dense), alpha=.3)
 
     resize_to_layout!(fig)
     display(fig, px_per_unit = 2)

@@ -1,4 +1,8 @@
-using InteractiveGeospatial, GeoMakie, Rasters, RasterDataSources, ArchGDAL, Test
+using InteractiveGeospatial, Rasters, ArchGDAL, RasterDataSources
 
 
-getraster(WorldClim{Climate}, :wind; month=1:12)
+files = getraster(WorldClim{Climate}, :wind; month=1:12)
+
+r = Raster(files[1])
+
+features = draw_features(r)
