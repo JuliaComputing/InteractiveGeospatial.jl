@@ -17,7 +17,7 @@ JSON3 = "1.14"
 Observables = "0.5"
 OrderedCollections = "1.6"
 Rasters = "0.11"
-julia = "1"
+julia = "1.10"
 
 [extras]
 RasterDataSources = "3cb90ccd-e1b6-4867-9617-4276c8b2ca36"

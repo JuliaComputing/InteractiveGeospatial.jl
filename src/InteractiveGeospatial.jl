@@ -40,13 +40,15 @@ geojson(x) = JSON3.write(prepare_geojson_write(x))
 
 
 #-----------------------------------------------------------------------------# draw_features
-function draw_features(r, ui_width=300, size=(800 + ui_width, 800))
+function draw_features(r)
     r = Rasters._maybe_resample(r)  # Remove rotation if rotated: AffineMap => LinRange Axes
     x_extrema, y_extrema = extrema.(r.dims)
     top_left = x_extrema[1], y_extrema[2]
+    ui_width = 200
+    size = (1300, 1000)
 
     # Initialize Figure
-    fig = Figure()
+    fig = Figure(; size)
     ax = Axis(fig[1, 2])
     rowsize!(fig.layout, 1, Relative(1))
 
@@ -82,8 +84,6 @@ function draw_features(r, ui_width=300, size=(800 + ui_width, 800))
     end
 
     polygon_label = Textbox(fig; placeholder="Polygon Label", width=ui_width, validator= x -> x ∉ keys(features[]))
-    # ready_to_save = @lift $(polygon_label.stored_string) ∉ keys($features) && length($click_coords) > 2 && !isempty($(polygon_label.stored_string))
-
 
     save_btn = Button(fig; label="Save", width=ui_width)
     on(save_btn.clicks) do _
@@ -104,8 +104,10 @@ function draw_features(r, ui_width=300, size=(800 + ui_width, 800))
 
     messages = Label(fig, ""; color=:green)
 
-    label(text) = Label(fig, text, fontsize=24, halign = :left, padding=(0,0,0,40))
-    sublabel(text) = Label(fig, text, fontsize=15, halign=:left, padding = (0,0,0,10))
+    # padding = (left, right, bottom, top)
+    label(text) = Label(fig, text, fontsize=18, halign = :left, padding=(0,0,0,20))
+    sublabel(text) = Label(fig, text, fontsize=14, halign=:left, padding = (0,0,0,10))
+    spacer = Label(fig, "")
 
     # UI Layout
     fig[1, 1] = vgrid!(valign=:top, width=ui_width,
@@ -131,17 +133,18 @@ function draw_features(r, ui_width=300, size=(800 + ui_width, 800))
     Colorbar(fig[1, 3], h)
 
     # Mouse position in top left corn
-    text!(ax, top_left..., text=@lift(string($mouse_coords)), color=draw_color.selection, align=(:left, :top), fontsize=24)
+    text!(ax, top_left..., text=@lift(string($mouse_coords)), color=draw_color.selection, align=(:left, :top), fontsize=12)
 
     # Polygon Drawing
-    scatterlines!(ax, click_coords, color=draw_color.selection, linewidth=2, markersize=20)
-    lines!(ax, dotted_line, color=draw_color.selection, linewidth=2, linestyle=:dash)
+    # TODO FIXME This segfaults when uncommented...well shit.
+    # scatterlines!(ax, click_coords, color=draw_color.selection, linewidth=2, markersize=20)
+    # lines!(ax, dotted_line, color=draw_color.selection, linewidth=2, linestyle=:dash)
 
-    # Polygon Viewing
-    poly!(ax, shape, color=draw_color.selection, linestyle=(:dot, :dense), alpha=.3)
+    # # Polygon Viewing
+    # poly!(ax, shape, color=draw_color.selection, linestyle=(:dot, :dense), alpha=.3)
 
     resize_to_layout!(fig)
-    display(fig, px_per_unit = 2)
+    display(fig)
 
     return features
 end
