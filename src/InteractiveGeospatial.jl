@@ -167,8 +167,7 @@ function draw_features(r)
 
     resize_to_layout!(fig)
 
-
-    return (; features, click_coords)
+    return features
 end
 
 end #module
