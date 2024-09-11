@@ -21,9 +21,10 @@ Rasters = "0.11"
 julia = "1.10"
 
 [extras]
+ArchGDAL = "c9ce4bd3-c3d5-55b8-8973-c0e20141b8c3"
 GeoJSON = "61d90e0f-e114-555e-ac52-39dfb47a3ef9"
 RasterDataSources = "3cb90ccd-e1b6-4867-9617-4276c8b2ca36"
 Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [targets]
-test = ["Test", "RasterDataSources", "GeoJSON"]
+test = ["Test", "ArchGDAL", "RasterDataSources", "GeoJSON"]
