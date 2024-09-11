@@ -1,5 +1,5 @@
 ### A Pluto.jl notebook ###
-# v0.19.19
+# v0.19.46
 
 using Markdown
 using InteractiveUtils
@@ -57,18 +57,6 @@ macro ifdata(ex)
 	end)
 end
 
-# ╔═╡ b7520af5-3c0b-4b41-a26a-049220b9f8fe
-scratchdir = @get_scratch!("InteractiveGeo")
-
-# ╔═╡ dc7484b2-7f87-44a6-b8da-7f8e56e92d22
-title(depth, name) = h.div(
-	Markdown.parse("$('#'^depth) $name");
-	style="border-radius: 5px; padding: 1px 12px 1px 12px; background: #155e75; color: #67e8f9;"
-)
-
-# ╔═╡ 4066e54a-64c5-472f-8831-816b32b65fef
-title(1, "Load Raster Data")
-
 # ╔═╡ cd1225cd-795a-4855-b451-fab339079e1b
 # ╠═╡ show_logs = false
 @ifdata begin
@@ -91,26 +79,6 @@ end
 @ifdata begin 
 	md"## Select Band: $(@bind band Select(1:nbands))"
 end
-
-# ╔═╡ 1c1f90ed-4fd8-44f3-96bc-902611df8bd5
-title(1, "Settings")
-
-# ╔═╡ 7504e969-6125-403c-be5c-d5727d180df0
-title(5, "Click multiple points on the plot to draw a Polygon.")
-
-# ╔═╡ 6c7f0b3f-b2b4-4f3b-9980-9ef98b1f6ef7
-begin
-	Percentile = ImageEdgeDetection.Percentile
-	canny(σ) = Canny(spatial_scale=σ, high=Percentile(80), low=Percentile(20))
-end
-
-# ╔═╡ 24df8362-bd99-4013-bebe-e149a3ad1afd
-remappings = sort!(OrderedDict(
-	"None" => identity,
-	"Log" => x -> log.(x .+ 1),
-	"HistogramEqualization" => x->adjust_histogram(x, Equalization(nbins=256)),
-	"EdgeDetection" => x -> detect_edges(x, canny(5))
-))
 
 # ╔═╡ a65971dc-30ad-41da-af13-4e836c03ad79
 @ifdata begin 	
@@ -136,34 +104,6 @@ remappings = sort!(OrderedDict(
 	
 
 	settings
-end
-
-# ╔═╡ 8cfb55ae-adac-4840-9b04-f61194693f48
-function haversine(a::LLA, b::LLA; R=6372.8)
-    Δlat = b.lat - a.lat
-    Δlon = b.lon - a.lon
-    a = sind(Δlat / 2) ^ 2 + cosd(a.lat) * cosd(b.lat) * sind(Δlon / 2) ^ 2
-    2R * asin(min(sqrt(a), one(a)))
-end
-
-# ╔═╡ 2fd1aebb-17e7-4e81-aa3c-31acb814a595
-function latlonratio(latlon::LLA)
-    lat = latlon.lat
-    lon = latlon.lon
-    Δlat = haversine(LLA(0,0), LLA(1,0))
-    Δlon = haversine(LLA(lat, lon - .5), LLA(lat, lon + .5))
-    Δlat / Δlon
-end
-
-# ╔═╡ af8d7f47-b7ea-427e-96e8-25d01c02f526
-function rotate_raster(A)
-	l = first(lookup(A, (X, Y)))
-	if all(hasdim(A, (X, Y))) && l isa Rasters.AffineProjected
-        res = Y(abs(l.affinemap.linear[1, 1])), X(abs(l.affinemap.linear[2, 2]))
-        resample(A, res)
-	else 
-		A
-    end
 end
 
 # ╔═╡ c2943598-fbff-4249-bbf2-3dbb89718813
@@ -242,6 +182,66 @@ end
 	
 end
 
+# ╔═╡ b7520af5-3c0b-4b41-a26a-049220b9f8fe
+scratchdir = @get_scratch!("InteractiveGeo")
+
+# ╔═╡ dc7484b2-7f87-44a6-b8da-7f8e56e92d22
+title(depth, name) = h.div(
+	Markdown.parse("$('#'^depth) $name");
+	style="border-radius: 5px; padding: 1px 12px 1px 12px; background: #155e75; color: #67e8f9;"
+)
+
+# ╔═╡ 4066e54a-64c5-472f-8831-816b32b65fef
+title(1, "Load Raster Data")
+
+# ╔═╡ 1c1f90ed-4fd8-44f3-96bc-902611df8bd5
+title(1, "Settings")
+
+# ╔═╡ 7504e969-6125-403c-be5c-d5727d180df0
+title(5, "Click multiple points on the plot to draw a Polygon.")
+
+# ╔═╡ 6c7f0b3f-b2b4-4f3b-9980-9ef98b1f6ef7
+begin
+	Percentile = ImageEdgeDetection.Percentile
+	canny(σ) = Canny(spatial_scale=σ, high=Percentile(80), low=Percentile(20))
+end
+
+# ╔═╡ 24df8362-bd99-4013-bebe-e149a3ad1afd
+remappings = sort!(OrderedDict(
+	"None" => identity,
+	"Log" => x -> log.(x .+ 1),
+	"HistogramEqualization" => x->adjust_histogram(x, Equalization(nbins=256)),
+	"EdgeDetection" => x -> detect_edges(x, canny(5))
+))
+
+# ╔═╡ 8cfb55ae-adac-4840-9b04-f61194693f48
+function haversine(a::LLA, b::LLA; R=6372.8)
+    Δlat = b.lat - a.lat
+    Δlon = b.lon - a.lon
+    a = sind(Δlat / 2) ^ 2 + cosd(a.lat) * cosd(b.lat) * sind(Δlon / 2) ^ 2
+    2R * asin(min(sqrt(a), one(a)))
+end
+
+# ╔═╡ 2fd1aebb-17e7-4e81-aa3c-31acb814a595
+function latlonratio(latlon::LLA)
+    lat = latlon.lat
+    lon = latlon.lon
+    Δlat = haversine(LLA(0,0), LLA(1,0))
+    Δlon = haversine(LLA(lat, lon - .5), LLA(lat, lon + .5))
+    Δlat / Δlon
+end
+
+# ╔═╡ af8d7f47-b7ea-427e-96e8-25d01c02f526
+function rotate_raster(A)
+	l = first(lookup(A, (X, Y)))
+	if all(hasdim(A, (X, Y))) && l isa Rasters.AffineProjected
+        res = Y(abs(l.affinemap.linear[1, 1])), X(abs(l.affinemap.linear[2, 2]))
+        resample(A, res)
+	else 
+		A
+    end
+end
+
 # ╔═╡ 00000000-0000-0000-0000-000000000001
 PLUTO_PROJECT_TOML_CONTENTS = """
 [deps]
@@ -286,7 +286,7 @@ StatsBase = "~0.33.21"
 PLUTO_MANIFEST_TOML_CONTENTS = """
 # This file is machine-generated - editing it directly is not advised
 
-julia_version = "1.8.4"
+julia_version = "1.10.5"
 manifest_format = "2.0"
 project_hash = "b8468bd41b742a3fe858120a2bcbf1c645202c5a"
 
@@ -456,7 +456,7 @@ version = "4.5.0"
 [[deps.CompilerSupportLibraries_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "e66e0078-7015-5450-92f7-15fbd957f2ae"
-version = "1.0.1+0"
+version = "1.1.1+0"
 
 [[deps.ComputationalResources]]
 git-tree-sha1 = "52cb3ec90e8a8bea0e62e275ba577ad0f74821f7"
@@ -524,7 +524,9 @@ version = "1.1.0"
 
 [[deps.DelimitedFiles]]
 deps = ["Mmap"]
+git-tree-sha1 = "9e2f36d3c96a820c678f2f1f1782582fcf685bae"
 uuid = "8bb1440f-4735-579b-a4ab-409b98df4dab"
+version = "1.9.1"
 
 [[deps.DimensionalData]]
 deps = ["Adapt", "ArrayInterfaceCore", "ConstructionBase", "Dates", "Extents", "IntervalSets", "IteratorInterfaceExtensions", "LinearAlgebra", "Random", "RecipesBase", "SparseArrays", "Statistics", "TableTraits", "Tables"]
@@ -570,6 +572,12 @@ deps = ["JSON3", "OrderedCollections", "StructTypes"]
 git-tree-sha1 = "c070b3c48a8ba3c6e6507997f0a7f5ebf85c3600"
 uuid = "acab07b0-f158-46d4-8913-50acef6d41fe"
 version = "0.1.10"
+
+[[deps.EpollShim_jll]]
+deps = ["Artifacts", "JLLWrappers", "Libdl"]
+git-tree-sha1 = "8e9441ee83492030ace98f9789a654a6d0b1f643"
+uuid = "2702e6a9-849d-5ed8-8c21-79e8b8f9ee43"
+version = "0.0.20230411+0"
 
 [[deps.Expat_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -881,7 +889,7 @@ uuid = "6218d12a-5da1-5696-b52f-db25d2ecc6d1"
 version = "1.2.1"
 
 [[deps.ImageMagick_jll]]
-deps = ["Artifacts", "Ghostscript_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "Pkg", "Zlib_jll", "libpng_jll"]
+deps = ["Artifacts", "Ghostscript_jll", "JLLWrappers", "JpegTurbo_jll", "Libdl", "Libtiff_jll", "OpenJpeg_jll", "Pkg", "Zlib_jll", "libpng_jll"]
 git-tree-sha1 = "124626988534986113cfd876e3093e4a03890f58"
 uuid = "c73af94c-d91f-53ed-93a7-00f77d67a9d7"
 version = "6.9.12+3"
@@ -1092,16 +1100,21 @@ version = "0.3.1"
 [[deps.LibCURL]]
 deps = ["LibCURL_jll", "MozillaCACerts_jll"]
 uuid = "b27032c2-a3e7-50c8-80cd-2d36dbcbfd21"
-version = "0.6.3"
+version = "0.6.4"
 
 [[deps.LibCURL_jll]]
 deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll", "Zlib_jll", "nghttp2_jll"]
 uuid = "deac9b47-8bc7-5906-a0fe-35ac56dc84c0"
-version = "7.84.0+0"
+version = "8.4.0+0"
 
 [[deps.LibGit2]]
-deps = ["Base64", "NetworkOptions", "Printf", "SHA"]
+deps = ["Base64", "LibGit2_jll", "NetworkOptions", "Printf", "SHA"]
 uuid = "76f85450-5226-5b5a-8eaa-529ad045b433"
+
+[[deps.LibGit2_jll]]
+deps = ["Artifacts", "LibSSH2_jll", "Libdl", "MbedTLS_jll"]
+uuid = "e37daf67-58a4-590a-8e99-b0245dd2ffc5"
+version = "1.6.4+0"
 
 [[deps.LibPQ_jll]]
 deps = ["Artifacts", "JLLWrappers", "Kerberos_krb5_jll", "Libdl", "OpenSSL_jll", "Pkg"]
@@ -1112,7 +1125,7 @@ version = "14.3.0+1"
 [[deps.LibSSH2_jll]]
 deps = ["Artifacts", "Libdl", "MbedTLS_jll"]
 uuid = "29816b5a-b9ab-546f-933c-edad1886dfa8"
-version = "1.10.2+0"
+version = "1.11.0+1"
 
 [[deps.Libdl]]
 uuid = "8f399da3-3557-5675-b5ff-fb832c97cbdb"
@@ -1166,7 +1179,7 @@ uuid = "38a345b3-de98-5d2b-a5d3-14cd9215e700"
 version = "2.36.0+0"
 
 [[deps.LinearAlgebra]]
-deps = ["Libdl", "libblastrampoline_jll"]
+deps = ["Libdl", "OpenBLAS_jll", "libblastrampoline_jll"]
 uuid = "37e2e46d-f89d-539d-b4ee-838fcccc9c8e"
 
 [[deps.LittleCMS_jll]]
@@ -1231,7 +1244,7 @@ version = "1.1.7"
 [[deps.MbedTLS_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "c8ffd9c3-330d-5841-b78e-0817d7145fa1"
-version = "2.28.0+0"
+version = "2.28.2+1"
 
 [[deps.Measures]]
 git-tree-sha1 = "c13304c81eec1ed3af7fc20e75fb6b26092a1102"
@@ -1261,7 +1274,7 @@ version = "0.3.4"
 
 [[deps.MozillaCACerts_jll]]
 uuid = "14a3606d-f60d-562e-9121-12d972cd8159"
-version = "2022.2.1"
+version = "2023.1.10"
 
 [[deps.NCDatasets]]
 deps = ["CFTime", "DataStructures", "Dates", "NetCDF_jll", "NetworkOptions", "Printf"]
@@ -1317,7 +1330,7 @@ version = "1.3.5+1"
 [[deps.OpenBLAS_jll]]
 deps = ["Artifacts", "CompilerSupportLibraries_jll", "Libdl"]
 uuid = "4536629a-c528-5b80-bd46-f80d51c5b363"
-version = "0.3.20+0"
+version = "0.3.23+4"
 
 [[deps.OpenEXR]]
 deps = ["Colors", "FileIO", "OpenEXR_jll"]
@@ -1340,7 +1353,7 @@ version = "2.4.0+0"
 [[deps.OpenLibm_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "05823500-19ac-5b8b-9628-191a04bc5112"
-version = "0.8.1+0"
+version = "0.8.1+2"
 
 [[deps.OpenSSL]]
 deps = ["BitFlags", "Dates", "MozillaCACerts_jll", "OpenSSL_jll", "Sockets"]
@@ -1374,7 +1387,7 @@ version = "1.4.1"
 [[deps.PCRE2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "efcefdf7-47ab-520b-bdef-62a2eaa19f15"
-version = "10.40.0+0"
+version = "10.42.0+1"
 
 [[deps.PNGFiles]]
 deps = ["Base64", "CEnum", "ImageCore", "IndirectArrays", "OffsetArrays", "libpng_jll"]
@@ -1418,9 +1431,9 @@ uuid = "30392449-352a-5448-841d-b1acce4e97dc"
 version = "0.40.1+0"
 
 [[deps.Pkg]]
-deps = ["Artifacts", "Dates", "Downloads", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
+deps = ["Artifacts", "Dates", "Downloads", "FileWatching", "LibGit2", "Libdl", "Logging", "Markdown", "Printf", "REPL", "Random", "SHA", "Serialization", "TOML", "Tar", "UUIDs", "p7zip_jll"]
 uuid = "44cfe95a-1eb2-52ea-b672-e2afdf69b78f"
-version = "1.8.0"
+version = "1.10.0"
 
 [[deps.PkgVersion]]
 deps = ["Pkg"]
@@ -1514,7 +1527,7 @@ deps = ["InteractiveUtils", "Markdown", "Sockets", "Unicode"]
 uuid = "3fa0cd96-eef1-5676-8a61-b3b8758bbffb"
 
 [[deps.Random]]
-deps = ["SHA", "Serialization"]
+deps = ["SHA"]
 uuid = "9a3f8284-a2c9-5f02-9a11-845980a1fd5c"
 
 [[deps.RangeArrays]]
@@ -1661,8 +1674,9 @@ uuid = "a2af1166-a08f-5f64-846c-94a0d3cef48c"
 version = "1.1.0"
 
 [[deps.SparseArrays]]
-deps = ["LinearAlgebra", "Random"]
+deps = ["Libdl", "LinearAlgebra", "Random", "Serialization", "SuiteSparse_jll"]
 uuid = "2f01184e-e22b-5df5-ae63-d93ebab69eaf"
+version = "1.10.0"
 
 [[deps.SpecialFunctions]]
 deps = ["ChainRulesCore", "IrrationalConstants", "LogExpFunctions", "OpenLibm_jll", "OpenSpecFun_jll"]
@@ -1690,6 +1704,7 @@ version = "1.4.0"
 [[deps.Statistics]]
 deps = ["LinearAlgebra", "SparseArrays"]
 uuid = "10745b16-79ce-11e8-11f9-7d13ad32a3b2"
+version = "1.10.0"
 
 [[deps.StatsAPI]]
 deps = ["LinearAlgebra"]
@@ -1724,10 +1739,15 @@ version = "1.10.0"
 deps = ["Libdl", "LinearAlgebra", "Serialization", "SparseArrays"]
 uuid = "4607b0f0-06f3-5cda-b6b1-a6196a1729e9"
 
+[[deps.SuiteSparse_jll]]
+deps = ["Artifacts", "Libdl", "libblastrampoline_jll"]
+uuid = "bea87d4a-7f5b-5778-9afe-8cc45184846c"
+version = "7.2.1+1"
+
 [[deps.TOML]]
 deps = ["Dates"]
 uuid = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
-version = "1.0.0"
+version = "1.0.3"
 
 [[deps.TableTraits]]
 deps = ["IteratorInterfaceExtensions"]
@@ -1744,7 +1764,7 @@ version = "1.10.0"
 [[deps.Tar]]
 deps = ["ArgTools", "SHA"]
 uuid = "a4e569a6-e804-4fa4-b0f3-eef7a1d5b13e"
-version = "1.10.1"
+version = "1.10.0"
 
 [[deps.TensorCore]]
 deps = ["LinearAlgebra"]
@@ -1814,7 +1834,7 @@ uuid = "41fe7b60-77ed-43a1-b4f0-825fd5a5650d"
 version = "0.2.0"
 
 [[deps.Wayland_jll]]
-deps = ["Artifacts", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
+deps = ["Artifacts", "EpollShim_jll", "Expat_jll", "JLLWrappers", "Libdl", "Libffi_jll", "Pkg", "XML2_jll"]
 git-tree-sha1 = "ed8d92d9774b077c53e1da50fd81a36af3744c1c"
 uuid = "a2964d1f-97da-50d4-b82a-358c7fce9d89"
 version = "1.21.0+0"
@@ -1978,7 +1998,7 @@ version = "0.9.4"
 [[deps.Zlib_jll]]
 deps = ["Libdl"]
 uuid = "83775a58-1f1d-513f-b197-d71354ab007a"
-version = "1.2.12+3"
+version = "1.2.13+1"
 
 [[deps.Zstd_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2011,9 +2031,9 @@ uuid = "0ac62f75-1d6f-5e53-bd7c-93b484bb37c0"
 version = "0.15.1+0"
 
 [[deps.libblastrampoline_jll]]
-deps = ["Artifacts", "Libdl", "OpenBLAS_jll"]
+deps = ["Artifacts", "Libdl"]
 uuid = "8e850b90-86db-534c-a0d3-1478176c7d93"
-version = "5.1.1+0"
+version = "5.11.0+0"
 
 [[deps.libfdk_aac_jll]]
 deps = ["Artifacts", "JLLWrappers", "Libdl", "Pkg"]
@@ -2048,12 +2068,12 @@ version = "1.3.7+1"
 [[deps.nghttp2_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "8e850ede-7688-5339-a07c-302acd2aaf8d"
-version = "1.48.0+0"
+version = "1.52.0+1"
 
 [[deps.p7zip_jll]]
 deps = ["Artifacts", "Libdl"]
 uuid = "3f19e933-33d8-53b3-aaab-bd5110c3b7a0"
-version = "17.4.0+0"
+version = "17.4.0+2"
 
 [[deps.snappy_jll]]
 deps = ["Artifacts", "JLLWrappers", "LZO_jll", "Libdl", "Pkg", "Zlib_jll"]
