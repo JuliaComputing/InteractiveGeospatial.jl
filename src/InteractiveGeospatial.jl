@@ -76,7 +76,7 @@ function draw_features(r)
     sublabel(text) = Label(fig, text, fontsize=10, halign=:left, padding = (0,0,-15,0), color=:gray)
 
     # `aggregate` Inputs
-    init_scale = round(Int, maximum(size(r)) / 1000)
+    init_scale = max(1, round(Int, maximum(size(r)) / 1000))
     scale = Textbox(fig; stored_string=string(init_scale), validator=Int, width=ui_width)
     aggregate_fun = menu(sum, mean, minimum, maximum)
 

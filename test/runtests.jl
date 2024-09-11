@@ -1,7 +1,7 @@
-using Test, InteractiveGeospatial, Rasters, ArchGDAL, RasterDataSources, GeoJSON, GLMakie, Markdown
+using Test, InteractiveGeospatial, Rasters, ArchGDAL, GeoJSON, GLMakie, Markdown
 
 
-file = getraster(WorldClim{Climate}, :wind; month=1)
+file = download("https://github.com/yeesian/ArchGDALDatasets/raw/master/pyrasterio/example.tif")
 
 r = Raster(file)
 
