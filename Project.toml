@@ -1,7 +1,7 @@
 name = "InteractiveGeospatial"
 uuid = "9dbc1c15-08f7-42e2-915c-53d8f7c4cd8b"
 authors = ["Josh Day <emailjoshday@gmail.com> and contributors"]
-version = "0.1.0"
+version = "0.2.0"
 
 [deps]
 GLMakie = "e9467ef8-e4e7-5192-8a1a-b1aee30e663a"
