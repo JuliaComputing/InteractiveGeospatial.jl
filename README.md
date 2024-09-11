@@ -1,7 +1,6 @@
 # InteractiveGeo
 
-- **InteractiveGeo** is a Julia package that provides interactive tools that aid in working with geospatial data.
-- **InteractiveGeo** is built primarily on top of [GLMakie](https://docs.makie.org/stable/explanations/backends/glmakie#glmakie) and [Rasters](https://rafaqz.github.io/Rasters.jl/dev/).
+- **InteractiveGeo** is a Julia package, built primarily on top of [GLMakie](https://docs.makie.org/stable/explanations/backends/glmakie#glmakie) and [Rasters](https://rafaqz.github.io/Rasters.jl/dev/), for interactively visualizing and annotating raster data.
 
 ## Usage
 
@@ -14,7 +13,8 @@ files = getraster(WorldClim{Climate}, :wind; month=1:12)
 r = Raster(files[1])
 
 # Create an Interactive Map of the Raster
-# The returned `features` object is an `Observable` that is populated based on features (polygons) drawn on the map
+# The returned `features` object is an `Observable` that is populated based
+# on features (polygons) drawn on the map.
 features = draw_features(r)
 
 # You can now add Markdown annotations to the polygon features
