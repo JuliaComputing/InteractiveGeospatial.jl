@@ -1,9 +1,9 @@
 using Test, InteractiveGeospatial, Rasters, ArchGDAL, RasterDataSources, GeoJSON, GLMakie, Markdown
 
 
-files = getraster(WorldClim{Climate}, :wind; month=1:12)
+file = getraster(WorldClim{Climate}, :wind; month=1)
 
-r = Raster(files[1])
+r = Raster(file)
 
 features = draw_features(r)
 
